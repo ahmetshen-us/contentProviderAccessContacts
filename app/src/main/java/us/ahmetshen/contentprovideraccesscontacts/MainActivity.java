@@ -1,13 +1,22 @@
 package us.ahmetshen.contentprovideraccesscontacts;
 
+import android.Manifest;
+import android.content.ContentResolver;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -22,10 +31,35 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                ContentResolver cr = getContentResolver();
+                Cursor cursor = cr.query(ContactsContract.Contacts.CONTENT_URI,
+                        new String[]{ContactsContract.Contacts.DISPLAY_NAME}, null, null, null);
+                List<String> contacts = new ArrayList<>();
+                if (cursor.moveToFirst()) {
+                    do {
+                        contacts.add(cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME)));
+                    } while (cursor.moveToNext());
+                }
+
+
             }
         });
+
+        final int REQUEST_CODE_ASK_PERMISSIONS = 123;
+        int hasReadContactsPermission =
+                ContextCompat.checkSelfPermission(MainActivity.this, android.Manifest.permission.READ_CONTACTS);
+        if (hasReadContactsPermission != PackageManager.PERMISSION_GRANTED) {
+            if (!ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this,
+                    Manifest.permission.READ_CONTACTS)) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.READ_CONTACTS},
+                        REQUEST_CODE_ASK_PERMISSIONS);
+                return;
+            }
+        }
+
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{Manifest.permission.READ_CONTACTS},
+                REQUEST_CODE_ASK_PERMISSIONS);
     }
 
     @Override
